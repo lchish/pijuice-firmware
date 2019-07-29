@@ -59,7 +59,6 @@ void PowerManagementInit(void) {
 			wakeupOnCharge = (wakeupOnChargeConfig&0x7F) <= 100 ? (wakeupOnChargeConfig&0x7F) * 10 : 0xFFFF;
 		} else {
 			wakeupOnChargeConfig = 0xFF;*/
-			wakeupOnCharge = 0xFFFF;
 		//}
 		if (CHARGER_IS_INPUT_PRESENT())
 			delayedTurnOnFlag = (noBatteryTurnOn == 1);
@@ -122,10 +121,10 @@ int8_t ResetHost(void) {
 
 int8_t WakeUpHost(void) {
 	//if (/*batteryRsoc >= 50 ||*/ powerInStatus != POW_SOURCE_NOT_PRESENT || power5vIoStatus != POW_SOURCE_NOT_PRESENT ) {
-	if (MS_TIME_COUNT(lastHostCommandTimer) > 15000 || (!POW_5V_BOOST_EN_STATUS() && power5vIoStatus == POW_SOURCE_NOT_PRESENT)) {
+	if (powerInStatus != POW_SOURCE_NOT_PRESENT && MS_TIME_COUNT(lastHostCommandTimer) > 25000) {
 		return ResetHost();
 	} else {
-		// it is already running
+		// it is already running or there is no power
 		return 0;
 	}
 	return 1;
@@ -135,7 +134,6 @@ void PowerOnButtonEventCb(uint8_t b, ButtonEvent_T event) {
 	//if ( event == BUTTON_EVENT_SINGLE_PRESS ) {
 		if ( (!POW_5V_BOOST_EN_STATUS() && power5vIoStatus == POW_SOURCE_NOT_PRESENT) || (MS_TIME_COUNT(lastWakeupTimer) > 15000 && MS_TIME_COUNT(lastHostCommandTimer) > 11000)  ) {
 			if (WakeUpHost() == 0) {
-				wakeupOnCharge = 0xFFFF;
 				rtcWakeupEventFlag = 0;
 				ioWakeupEvent = 0;
 				delayedPowerOffCounter = 0;
@@ -158,7 +156,6 @@ void PowerOffButtonEventCb(uint8_t b, ButtonEvent_T event) {
 
 void ButtonEventFuncPowerResetCb(uint8_t b, ButtonEvent_T event) {
 	if (ResetHost() == 0) {
-		wakeupOnCharge = 0xFFFF;
 		rtcWakeupEventFlag = 0;
 		ioWakeupEvent = 0;
 		delayedPowerOffCounter = 0;
@@ -208,9 +205,8 @@ void PowerManagementTask(void) {
 		else
 			LedFunctionSetRGB(LED_CHARGE_STATUS, r, g, b);
 
-		if ( ((batteryRsoc >= wakeupOnCharge && CHARGER_IS_INPUT_PRESENT() && CHARGER_IS_BATTERY_PRESENT()) || rtcWakeupEventFlag || ioWakeupEvent) && MS_TIME_COUNT(lastHostCommandTimer) > 15000 && MS_TIME_COUNT(lastWakeupTimer) > 30000 ) {
+		if ( ((batteryRsoc >= wakeupOnCharge && CHARGER_IS_INPUT_PRESENT() && CHARGER_IS_BATTERY_PRESENT()) || rtcWakeupEventFlag || ioWakeupEvent) && MS_TIME_COUNT(lastHostCommandTimer) > 25000 && MS_TIME_COUNT(lastWakeupTimer) > 30000 ) {
 			if ( WakeUpHost() == 0 ) {
-				wakeupOnCharge = 0xFFFF;
 				rtcWakeupEventFlag = 0;
 				delayedPowerOffCounter = 0;
 				ioWakeupEvent = 0;
@@ -219,7 +215,6 @@ void PowerManagementTask(void) {
 
 		if (watchdogExpirePeriod && MS_TIME_COUNT(lastHostCommandTimer) > watchdogTimer) {
 			if ( WakeUpHost() == 0 ) {
-				wakeupOnCharge = 0xFFFF;
 				watchdogExpiredFlag = 1;
 				rtcWakeupEventFlag = 0;
 				ioWakeupEvent = 0;
