@@ -43,7 +43,7 @@ extern void SysTickCb();
 extern ADC_HandleTypeDef hadc;
 extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
-extern SMBUS_HandleTypeDef hsmbus;
+//extern SMBUS_HandleTypeDef hsmbus;
 extern void I2C_EV_IRQHandler(I2C_HandleTypeDef *hi2c);
 
 extern RTC_HandleTypeDef hrtc;
@@ -145,11 +145,11 @@ void I2C1_IRQHandler(void)
 	HAL_SMBUS_Slave_Receive_IT(&hsmbus, (uint8_t *)i2cTrfBuffer, 255, SMBUS_FIRST_AND_LAST_FRAME_NO_PEC);
 	newSmbusTransferFlag = 0;
   }*/
-  HAL_SMBUS_EV_IRQHandler(&hsmbus);
-  HAL_SMBUS_ER_IRQHandler(&hsmbus);
+  //HAL_SMBUS_EV_IRQHandler(&hsmbus);
+  //HAL_SMBUS_ER_IRQHandler(&hsmbus);
   //I2C_EV_IRQHandler(&hi2c1);
-  //HAL_I2C_EV_IRQHandler(&hi2c1);
-  //HAL_I2C_ER_IRQHandler(&hi2c1);
+  HAL_I2C_EV_IRQHandler(&hi2c1);
+  HAL_I2C_ER_IRQHandler(&hi2c1);
 }
 
 void I2C2_IRQHandler(void)

@@ -30,7 +30,7 @@ static int8_t reg[REGISTERS_NUM]; // registers used for i2c master access
 //static int8_t regWriteFn[REGISTERS_NUM];
 extern RTC_HandleTypeDef hrtc;
 extern I2C_HandleTypeDef hi2c2;
-extern SMBUS_HandleTypeDef hsmbus;
+extern I2C_HandleTypeDef hi2c1;//extern SMBUS_HandleTypeDef hsmbus;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim15;
 extern TIM_HandleTypeDef htim17;
@@ -40,7 +40,7 @@ extern uint8_t powerOffBtnEventFlag;
 
 extern void Error_Handler(void);
 
-const uint8_t firmwareVer = 0x13;
+const uint8_t firmwareVer = 0x14;
 const uint8_t firmwareVariant = 0x00;
 
 typedef  void (*pFunction)(void);
@@ -553,7 +553,7 @@ void CmdServerReadBatVoltage(uint8_t dir, uint8_t *pData, uint16_t *dataLen){
 
 void CmdServerReadBatCurrent(uint8_t dir, uint8_t *pData, uint16_t *dataLen){
 	if (dir == MASTER_CMD_DIR_READ) {
-		uint16_t cur = batteryCurrent;
+		volatile uint16_t cur = batteryCurrent;
 		uint8_t adr = pData[0];
 		reg[adr] = cur;
 		reg[adr+1] = cur >> 8;
@@ -566,7 +566,7 @@ void CmdServerReadBatCurrent(uint8_t dir, uint8_t *pData, uint16_t *dataLen){
 void CmdServerReadMainVoltage(uint8_t dir, uint8_t *pData, uint16_t *dataLen){
 	if (dir == MASTER_CMD_DIR_READ) {
 		uint8_t adr = pData[0];
-		uint16_t ioVolt = Get5vIoVoltage();
+		volatile uint16_t ioVolt = Get5vIoVoltage();
 		reg[adr] = ioVolt;
 		reg[adr+1] = ioVolt >> 8;
 		pData[0] = reg[adr];
@@ -936,25 +936,25 @@ void CmdServerReadWritePowerRegulatorConfiguration(uint8_t dir, uint8_t *pData, 
 void CmdServerReadWriteOwnAddress1(uint8_t dir, uint8_t *pData, uint16_t *dataLen) {
 	if (dir == MASTER_CMD_DIR_WRITE) {
 		uint8_t adr = pData[1]*2;
-		if (pData[1] > 0 && pData[1] < 128 && hsmbus.Init.OwnAddress1 != adr ){
+		if (pData[1] > 0 && pData[1] < 128 && hi2c1.Init.OwnAddress1 != adr ){
 			EE_WriteVariable(OWN_ADDRESS1_NV_ADDR, adr | ((uint16_t)~adr<<8));
 			uint16_t var = 0;
 			EE_ReadVariable(OWN_ADDRESS1_NV_ADDR, &var);
 			if ( (var&0xFF) == adr && (((~var)&0xFF) == (var>>8)) ) {
 				// if successfully saved reinitialize I2C with new address
-				hsmbus.Init.OwnAddress1 = adr;
-				if (HAL_SMBUS_DeInit(&hsmbus) != HAL_OK)
+				hi2c1.Init.OwnAddress1 = adr;
+				if (HAL_I2C_DeInit(&hi2c1) != HAL_OK)
 				{
 					//Error_Handler();
 				}
-				if (HAL_SMBUS_Init(&hsmbus) != HAL_OK)
+				if (HAL_I2C_Init(&hi2c1) != HAL_OK)
 				{
 					//Error_Handler();
 				}
 			}
 		}
 	} else {
-		pData[0] = hsmbus.Init.OwnAddress1 >> 1;
+		pData[0] = hi2c1.Init.OwnAddress1 >> 1;
 		*dataLen = 1;
 	}
 }
@@ -962,25 +962,25 @@ void CmdServerReadWriteOwnAddress1(uint8_t dir, uint8_t *pData, uint16_t *dataLe
 void CmdServerReadWriteOwnAddress2(uint8_t dir, uint8_t *pData, uint16_t *dataLen) {
 	if (dir == MASTER_CMD_DIR_WRITE) {
 		uint8_t adr = pData[1]*2;
-		if (pData[1] > 0 && pData[1] < 128 && hsmbus.Init.OwnAddress2 != adr ){
+		if (pData[1] > 0 && pData[1] < 128 && hi2c1.Init.OwnAddress2 != adr ){
 			EE_WriteVariable(OWN_ADDRESS2_NV_ADDR, adr | ((uint16_t)~adr<<8));
 			uint16_t var = 0;
 			EE_ReadVariable(OWN_ADDRESS2_NV_ADDR, &var);
 			if ( (var&0xFF) == adr && (((~var)&0xFF) == (var>>8)) ) {
 				// if successfully saved reinitialize I2C with new address
-				hsmbus.Init.OwnAddress2 = adr;
-				if (HAL_SMBUS_DeInit(&hsmbus) != HAL_OK)
+				hi2c1.Init.OwnAddress2 = adr;
+				if (HAL_I2C_DeInit(&hi2c1) != HAL_OK)
 				{
 					//Error_Handler();
 				}
-				if (HAL_SMBUS_Init(&hsmbus) != HAL_OK)
+				if (HAL_I2C_Init(&hi2c1) != HAL_OK)
 				{
 					//Error_Handler();
 				}
 			}
 		}
 	} else {
-		pData[0] = hsmbus.Init.OwnAddress2 >> 1;
+		pData[0] = hi2c1.Init.OwnAddress2 >> 1;
 		*dataLen = 1;
 	}
 }
@@ -1030,7 +1030,7 @@ void CmdServerRunBootloader(uint8_t dir, uint8_t *pData, uint16_t *dataLen) {
 	executionState = EXECUTION_STATE_UPDATE;
 
 	HAL_ADC_MspDeInit(&hadc);
-	HAL_SMBUS_MspDeInit(&hsmbus);
+	HAL_I2C_DeInit(&hi2c1);//HAL_SMBUS_MspDeInit(&hsmbus);
 	HAL_I2C_MspDeInit(&hi2c2);
 	HAL_RTC_MspDeInit(&hrtc);
 	HAL_TIM_PWM_MspDeInit(&htim3);

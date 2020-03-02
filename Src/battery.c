@@ -22,20 +22,20 @@ BatteryProfile_T customBatProfileReq;
 BatteryStatus_T batteryStatus = BAT_STATUS_NOT_PRESENT;
 
 const BatteryProfile_T batteryProfiles[] = {
-	{ 	// BP6X battery
+	{ 	// PiJuice Zero 1000mAh battery
 		BAT_CHEMISTRY_LIPO,
-		1400, // 1400mAh
-		0x04, // 850mA, ~0.6C
+		1000, // 1000mAh
+		0x01, // 6250mA
 		0x00, // 50mA
 		0x22, // 4.18V
 		150, // 3V
-		3649, 3800, 4077,
-		20670, 20319, 20215,
-		1,
-		10,
-		45,
-		59,
-		0x0D34,
+		3743, 3933, 4057,
+		13500, 13300, 13300,
+		0,
+		2,
+		49,
+		65,
+		3450,
 		1000, // 10K
 	},
 	{ 	// BP7X battery
@@ -70,20 +70,132 @@ const BatteryProfile_T batteryProfiles[] = {
 		0x0D34,
 		1000, // 10K
 	},
-	{ 	// 12000mAh battery
+	{ 	// PiJuice 12000mAh battery
 		BAT_CHEMISTRY_LIPO,
 		12000, // 12000mAh
 		0x1A, // 2500mA
-		0x06, // 300mA
+		0x06, // 350mA
 		0x22, // 4.18V
 		150, // 3V
-		3660, 3800, 4075,
-		18300, 18000, 18000,
-		1,
+		3488, 3824, 4061,
+		11200, 10800, 10800,
+		0,
 		2,
 		49,
 		65,
+		3450,
+		1000, // 10K
+	},
+	{ 	// PiJuice 5000mAh battery
+		BAT_CHEMISTRY_LIPO,
+		5000, // 5000mAh
+		0x1A, // 2500mA
+		0x04, // 250mA
+		0x22, // 4.18V
+		150, // 3V
+		3506, 3870, 4056,
+		11100, 10500, 10700,
+		0,
+		2,
+		49,
+		65,
+		3450,
+		1000, // 10K
+	},
+	{ 	// PiJuice BP7X 1600mAh battery
+		BAT_CHEMISTRY_LIPO,
+		1600, // 1600mAh
+		0x05, // 925mA
+		0x00, // 50mA
+		0x22, // 4.18V
+		150, // 3V
+		3672, 3811, 4094,
+		22200, 20800, 20500,
+		0,
+		2,
+		50,
+		70,
 		0x0D34,
+		1000, // 10K
+	},
+	{ 	// PiJuice SNN5843 1300mAh battery
+		BAT_CHEMISTRY_LIPO,
+		1300, // 1300mAh
+		0x03, // 775mA
+		0x00, // 50mA
+		0x22, // 4.18V
+		150, // 3V
+		3675, 3818, 4105,
+		15600, 15100, 15100,
+		0,
+		2,
+		50,
+		70,
+		0x0D34,
+		1000, // 10K
+	},
+	{ 	// PiJuice 1200mAh battery
+		BAT_CHEMISTRY_LIPO,
+		1200, // 1200mAh
+		0x02, // 700mA
+		0x00, // 50mA
+		0x22, // 4.18V
+		150, // 3V
+		3514, 3859, 4045,
+		19400, 17300, 16900,
+		0,
+		2,
+		49,
+		65,
+		3450,
+		1000, // 10K
+	},
+	{ 	// BP6X battery
+		BAT_CHEMISTRY_LIPO,
+		1400, // 1400mAh
+		0x04, // 850mA, ~0.6C
+		0x00, // 50mA
+		0x22, // 4.18V
+		150, // 3V
+		3649, 3800, 4077,
+		20670, 20319, 20215,
+		1,
+		10,
+		45,
+		59,
+		0x0D34,
+		1000, // 10K
+	},
+	{ 	// PiJuice 600mAh battery
+		BAT_CHEMISTRY_LIPO,
+		600, // 600mAh
+		0x00, // 550mA
+		0x00, // 50mA
+		0x22, // 4.18V
+		150, // 3V
+		3659, 3816, 4087,
+		37200, 22100, 22300,
+		0,
+		2,
+		49,
+		65,
+		3450,
+		1000, // 10K
+	},
+	{ 	// PiJuice 500mAh battery
+		BAT_CHEMISTRY_LIPO,
+		500, // 500mAh
+		0x00, // 550mA
+		0x00, // 50mA
+		0x22, // 4.18V
+		150, // 3V
+		3659, 3914, 4060,
+		16600, 15600, 15600,
+		0,
+		2,
+		49,
+		65,
+		3450,
 		1000, // 10K
 	}
 };
@@ -471,19 +583,19 @@ int8_t BatteryWriteCustomExtendedProfileReq(uint8_t data[], uint16_t len) {
 }
 
 int8_t BatteryReadCurrentExtendedProfile(uint8_t *data, uint16_t *len) {
-	data[0] = customBatProfile.chemistry;
-	data[1] = customBatProfile.ocv10;
-	data[2] = customBatProfile.ocv10>>8;
-	data[3] = customBatProfile.ocv50;
-	data[4] = customBatProfile.ocv50>>8;
-	data[5] = customBatProfile.ocv90;
-	data[6] = customBatProfile.ocv90>>8;
-	data[7] = customBatProfile.r10;
-	data[8] = customBatProfile.r10>>8;
-	data[9] = customBatProfile.r50;
-	data[10] = customBatProfile.r50>>8;
-	data[11] = customBatProfile.r90;
-	data[12] = customBatProfile.r90>>8;
+	data[0] = currentBatProfile->chemistry;
+	data[1] = currentBatProfile->ocv10;
+	data[2] = currentBatProfile->ocv10>>8;
+	data[3] = currentBatProfile->ocv50;
+	data[4] = currentBatProfile->ocv50>>8;
+	data[5] = currentBatProfile->ocv90;
+	data[6] = currentBatProfile->ocv90>>8;
+	data[7] = currentBatProfile->r10;
+	data[8] = currentBatProfile->r10>>8;
+	data[9] = currentBatProfile->r50;
+	data[10] = currentBatProfile->r50>>8;
+	data[11] = currentBatProfile->r90;
+	data[12] = currentBatProfile->r90>>8;
 	data[13] = 0xFF; // reserved for future use
 	data[14] = 0xFF; // reserved for future use
 	data[15] = 0xFF; // reserved for future use

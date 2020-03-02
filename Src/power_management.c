@@ -115,6 +115,7 @@ int8_t ResetHost(void) {
 		i2c_GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_HIGH;
 		i2c_GPIO_InitStruct.Alternate = GPIO_AF1_I2C1;
 		HAL_GPIO_Init(GPIOB, &i2c_GPIO_InitStruct);
+		return 0;
 	}
 	return 1;
 }
@@ -230,7 +231,7 @@ void PowerManagementTask(void) {
 	}
 
 	if ( delayedPowerOffCounter && delayedPowerOffCounter <= HAL_GetTick() ) {
-		if (POW_5V_BOOST_EN_STATUS()) {
+		if (POW_5V_BOOST_EN_STATUS() && (pow5vInDetStatus != POW_5V_IN_DETECTION_STATUS_PRESENT)) {
 			Turn5vBoost(0);
 		}
 		delayedPowerOffCounter = 0;

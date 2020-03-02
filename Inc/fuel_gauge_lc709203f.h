@@ -34,7 +34,7 @@ typedef enum RsocMeasurementConfig_T {
 extern uint16_t batteryVoltage;
 extern uint16_t batteryRsoc;
 extern int8_t batteryTemp;
-extern int16_t batteryCurrent;
+extern volatile int16_t batteryCurrent;
 extern int8_t fuelGaugeI2cErrorCounter;
 extern volatile uint8_t fuelGaugeTempMode;
 extern BatteryTempSenseConfig_T tempSensorConfig;

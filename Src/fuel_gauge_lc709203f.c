@@ -26,7 +26,7 @@ uint16_t batteryRsoc __attribute__((section("no_init")));
 //volatile uint16_t emptyIndicator = 0;
 uint16_t fuelGaugeTemp = 0;
 int8_t batteryTemp = 25;
-int16_t batteryCurrent = 0;
+volatile int16_t batteryCurrent;
 
 static uint32_t fuelGaugeTaskTimer;
 
@@ -155,6 +155,8 @@ void FuelGaugeDvInit(void) {
 	for (i = -127; i < 129; i++) {
 		rSocTempCompesateTbl[(uint8_t)i] = i < 21 ? (uint32_t)255 * 32 / (32 + 2*(20-i)) : 255; // 1 + 2*(20-batteryTemp)/(20-(-12)), krtemp ~ 3, temperature=i
 	}
+
+	batteryCurrent = 0;
 }
 
 int8_t FuelGaugeIcInit(void) {
@@ -270,7 +272,9 @@ void SocEvaluateFuelGaugeIc(void) {
 
 	if (batteryRsoc != prevRsoc && (HAL_GetTick() - dischargeCount) > 500) {
 		dischargeRate = ((int32_t)prevRsoc - batteryRsoc) * (int32_t)1843200 / (int32_t)(HAL_GetTick() - dischargeCount);
+		//__disable_irq();
 		batteryCurrent = (dischargeRate * (currentBatProfile!=NULL ? currentBatProfile->capacity : 10000)) >> 10;
+		//__enable_irq();
 		dischargeCount = HAL_GetTick();
 		dischargeCountTemp = HAL_GetTick();
 		prevRsoc = batteryRsoc;
@@ -387,7 +391,7 @@ void FuelGaugeTask(void) {
 						if ( currentBatProfile != NULL ) {
 							// use direct NTC measurement
 							volatile uint16_t ntcAdcSample = ADC_GET_BUFFER_SAMPLE(ADC_NTC_CHN);
-							if (ntcAdcSample<3000 && ntcAdcSample>4) { // sensor is connected
+							if (ntcAdcSample<3000 && ntcAdcSample>5) { // sensor is connected
 								//volatile int32_t r = ntcAdcSample * (int32_t)240000 / (4096 - ntcAdcSample);
 								int32_t dr25 = ntcAdcSample * (int32_t)240000 / ((int16_t)4096 - ntcAdcSample)*10 / currentBatProfile->ntcResistance;
 								uint16_t beta = currentBatProfile->ntcB;
@@ -395,7 +399,7 @@ void FuelGaugeTask(void) {
 								it = it < 0 ? 0 : it;
 								it = it > 255 ? 255 : it;
 								int16_t ntcTemp =  (int32_t)65593*beta / (logTbl[it]* (int32_t)8 + (int32_t)220*beta) - 273; //1.0 / (log((double)r/r25)/beta + (double)1.0/298.15) - 273.15;
-								if ( ntcTemp>=23 && ntcTemp<=27 && (mcuTemperature<15 || mcuTemperature>45) ) {
+								if ( (ntcTemp>=23 && ntcTemp<=27 && (mcuTemperature<15 || mcuTemperature>45)) || ntcTemp <-29 || ntcTemp > 90 ) {
 									// there can be fixed resistor instead of NTC, use mcu measurement instead
 									batteryTemp = mcuTemperature;
 								} else {
